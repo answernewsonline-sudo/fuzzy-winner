@@ -4,41 +4,61 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import {
   Environment,
   Float,
-  MeshDistortMaterial,
   Sparkles,
 } from '@react-three/drei'
 import { useRef, useState } from 'react'
 import * as THREE from 'three'
 
-function Blob() {
-  const mesh = useRef<THREE.Mesh>(null)
+function Globe() {
+  const group = useRef<THREE.Group>(null)
+  const wire = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
 
   useFrame((state, delta) => {
-    if (!mesh.current) return
-    mesh.current.rotation.y += delta * 0.15
-    mesh.current.rotation.x += delta * 0.05
-    const target = hovered ? 1.12 : 1
-    mesh.current.scale.lerp(new THREE.Vector3(target, target, target), 0.08)
+    if (!group.current) return
+    group.current.rotation.y += delta * 0.2
+    if (wire.current) wire.current.rotation.y -= delta * 0.08
+    const target = hovered ? 1.08 : 1
+    group.current.scale.lerp(new THREE.Vector3(target, target, target), 0.08)
   })
 
   return (
-    <Float speed={1.4} rotationIntensity={0.4} floatIntensity={0.8}>
-      <mesh
-        ref={mesh}
+    <Float speed={1.4} rotationIntensity={0.3} floatIntensity={0.8}>
+      <group
+        ref={group}
+        rotation={[0.35, 0, 0.15]}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <icosahedronGeometry args={[1.6, 64]} />
-        <MeshDistortMaterial
-          color="#ff5a1f"
-          roughness={0.12}
-          metalness={0.65}
-          distort={hovered ? 0.55 : 0.38}
-          speed={2.2}
-          envMapIntensity={1.2}
-        />
-      </mesh>
+        <mesh>
+          <sphereGeometry args={[1.5, 128, 128]} />
+          <meshPhysicalMaterial
+            color="#c9ccd6"
+            metalness={1}
+            roughness={0.04}
+            clearcoat={1}
+            clearcoatRoughness={0.05}
+            envMapIntensity={1.6}
+          />
+        </mesh>
+        <mesh ref={wire}>
+          <sphereGeometry args={[1.56, 36, 18]} />
+          <meshStandardMaterial
+            color="#e8e6e3"
+            emissive="#7c5cff"
+            emissiveIntensity={hovered ? 0.9 : 0.45}
+            metalness={1}
+            roughness={0.1}
+            wireframe
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[2.1, 0.008, 16, 200]} />
+          <meshStandardMaterial color="#e8e6e3" metalness={1} roughness={0.1} />
+        </mesh>
+      </group>
     </Float>
   )
 }
@@ -90,7 +110,7 @@ export function HeroScene() {
       <directionalLight position={[4, 5, 3]} intensity={2} />
       <pointLight position={[-4, -2, 2]} intensity={30} color="#7c5cff" />
 
-      <Blob />
+      <Globe />
       <Satellite position={[-3, 1.4, -1]} geometry="torus" color="#e8e6e3" />
       <Satellite position={[3.2, -1.2, -0.5]} geometry="octa" color="#7c5cff" />
       <Satellite position={[2.6, 1.8, -2]} geometry="sphere" color="#e8e6e3" scale={0.9} />
