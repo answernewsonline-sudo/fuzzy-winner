@@ -271,8 +271,9 @@ const STL_MODELS: Record<string, string | undefined> = {
 // Menu labels drawn from an FBX model.
 const FBX_MODELS: Record<string, string | undefined> = {
   Contact: '/models/contact.fbx',
+  News: '/models/news.fbx',
 }
-// Contact model is 70 units tall in its own axes; scale to match the other labels.
+// The text FBX models are 70 units tall in their own axes; scale to match the other labels.
 const FBX_SCALE = 0.25 / 70
 
 // Extruded 3D label loaded from an STL file, shaded as chromium.
