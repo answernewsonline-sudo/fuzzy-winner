@@ -2,8 +2,10 @@
 
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Billboard, Center, Environment, Float, Sparkles, Text3D, useTexture } from '@react-three/drei'
+import { useLoader } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 
 export const MENU_ITEMS = ['News', 'Contact', 'Business', 'Exhibition Online', 'Directory'] as const
 
@@ -257,6 +259,39 @@ function Globe() {
   )
 }
 
+const STL_SCALE = 0.36
+
+// Extruded 3D label loaded from an STL file, shaded as chromium.
+function StlLabel({
+  url,
+  env,
+  highlighted,
+}: {
+  url: string
+  env: THREE.Texture
+  highlighted: boolean
+}) {
+  const geometry = useLoader(STLLoader, url)
+
+  useEffect(() => {
+    geometry.center()
+  }, [geometry])
+
+  return (
+    <mesh geometry={geometry} scale={STL_SCALE}>
+      <meshStandardMaterial
+        color={CHROME}
+        metalness={1}
+        roughness={0.12}
+        envMap={env}
+        envMapIntensity={1.8}
+        emissive={ACCENT}
+        emissiveIntensity={highlighted ? 0.6 : 0}
+      />
+    </mesh>
+  )
+}
+
 function MenuItem({
   label,
   angle,
@@ -319,6 +354,9 @@ function MenuItem({
               envMapIntensity={1.6}
             />
           </mesh>
+          {label === 'Exhibition Online' ? (
+            <StlLabel url="/models/exhibition-online.stl" env={env} highlighted={highlighted} />
+          ) : (
           <Center>
             <Text3D
               font="/fonts/geist-bold.typeface.json"
@@ -344,6 +382,7 @@ function MenuItem({
               />
             </Text3D>
           </Center>
+          )}
           <mesh position={[0, 0.1, -0.02]}>
             <planeGeometry args={[label.length * 0.24 + 0.4, 1]} />
             <meshBasicMaterial transparent opacity={0} depthWrite={false} />
