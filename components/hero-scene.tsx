@@ -272,6 +272,7 @@ const STL_MODELS: Record<string, string | undefined> = {
 const FBX_MODELS: Record<string, string | undefined> = {
   Contact: '/models/contact.fbx',
   News: '/models/news.fbx',
+  Directory: '/models/directory.fbx',
 }
 // The text FBX models are 70 units tall in their own axes; scale to match the other labels.
 const FBX_SCALE = 0.25 / 70
