@@ -325,6 +325,54 @@ function MenuItem({
   )
 }
 
+const ORBIT_DUST = 1400
+const ORBIT_COLORS = ['#37d7ff', '#ff4fd8', '#ffe2a8', '#c9ccd6'].map((hex) => new THREE.Color(hex))
+
+// Stardust scattered along the menu orbit, tilted with the ring.
+function OrbitDust() {
+  const { positions, colors, glow } = useMemo(() => {
+    const positions = new Float32Array(ORBIT_DUST * 3)
+    const colors = new Float32Array(ORBIT_DUST * 3)
+    const c = new THREE.Color()
+
+    for (let i = 0; i < ORBIT_DUST; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const r = RING_RADIUS + gauss() * 0.12
+      positions[i * 3] = Math.cos(angle) * r
+      positions[i * 3 + 1] = gauss() * 0.18
+      positions[i * 3 + 2] = Math.sin(angle) * r
+
+      c.copy(ORBIT_COLORS[Math.floor(Math.random() * ORBIT_COLORS.length)])
+      const brightness = 0.5 + Math.random() * 0.5
+      colors[i * 3] = c.r * brightness
+      colors[i * 3 + 1] = c.g * brightness
+      colors[i * 3 + 2] = c.b * brightness
+    }
+
+    return { positions, colors, glow: makeGlowTexture() }
+  }, [])
+
+  return (
+    <points>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        map={glow}
+        vertexColors
+        size={0.07}
+        sizeAttenuation
+        transparent
+        opacity={0.9}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        fog={false}
+      />
+    </points>
+  )
+}
+
 function MenuRing({
   activeIndex,
   onSelect,
@@ -349,6 +397,7 @@ function MenuRing({
 
   return (
     <group rotation={[0.22, 0, 0]}>
+      <OrbitDust />
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[RING_RADIUS, 0.006, 16, 256]} />
         <meshStandardMaterial color={LIGHT} metalness={1} roughness={0.1} transparent opacity={0.5} />
