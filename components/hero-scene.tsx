@@ -81,8 +81,13 @@ function Galaxy() {
     return { positions, colors, sprite: makeGlowTexture() }
   }, [])
 
-  useFrame((_, delta) => {
-    if (group.current) group.current.rotation.z += delta * 0.03
+  useFrame((state, delta) => {
+    if (!group.current) return
+    group.current.rotation.z += delta * 0.03
+    // Mid layer follows the pointer a little, so it moves against the far field.
+    const { pointer } = state
+    group.current.position.x = THREE.MathUtils.lerp(group.current.position.x, pointer.x * 0.6, 0.05)
+    group.current.position.y = THREE.MathUtils.lerp(group.current.position.y, -1.2 + pointer.y * 0.4, 0.05)
   })
 
   return (
@@ -104,6 +109,91 @@ function Galaxy() {
           fog={false}
         />
       </points>
+    </group>
+  )
+}
+
+const FAR_STARS = 9000
+const DUST_CLOUDS = 14
+const FAR_COLORS = ['#37d7ff', '#7c5cff', '#ff4fd8', '#ff7a3d', '#ffe2a8'].map(
+  (hex) => new THREE.Color(hex),
+)
+
+// Far background: a dense star field plus soft nebula dust, filling the screen.
+// It sits deepest in the scene and moves least with the pointer, giving depth.
+function DepthField() {
+  const group = useRef<THREE.Group>(null)
+
+  const { positions, colors, glow, dust } = useMemo(() => {
+    const positions = new Float32Array(FAR_STARS * 3)
+    const colors = new Float32Array(FAR_STARS * 3)
+    const c = new THREE.Color()
+
+    for (let i = 0; i < FAR_STARS; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 100
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 60
+      positions[i * 3 + 2] = -30 - Math.random() * 35
+
+      c.copy(FAR_COLORS[Math.floor(Math.random() * FAR_COLORS.length)])
+      const brightness = 0.4 + Math.random() * 0.6
+      colors[i * 3] = c.r * brightness
+      colors[i * 3 + 1] = c.g * brightness
+      colors[i * 3 + 2] = c.b * brightness
+    }
+
+    const dust = Array.from({ length: DUST_CLOUDS }, () => ({
+      position: [(Math.random() - 0.5) * 90, (Math.random() - 0.5) * 50, -40 - Math.random() * 20] as [
+        number,
+        number,
+        number,
+      ],
+      scale: 14 + Math.random() * 18,
+      color: FAR_COLORS[Math.floor(Math.random() * FAR_COLORS.length)],
+    }))
+
+    return { positions, colors, glow: makeGlowTexture(), dust }
+  }, [])
+
+  useFrame((state, delta) => {
+    if (!group.current) return
+    const { pointer } = state
+    group.current.position.x = THREE.MathUtils.lerp(group.current.position.x, pointer.x * 0.4, 0.05)
+    group.current.position.y = THREE.MathUtils.lerp(group.current.position.y, pointer.y * 0.25, 0.05)
+    group.current.rotation.z += delta * 0.01
+  })
+
+  return (
+    <group ref={group}>
+      <points>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[colors, 3]} />
+        </bufferGeometry>
+        <pointsMaterial
+          map={glow}
+          vertexColors
+          size={0.35}
+          sizeAttenuation
+          transparent
+          opacity={0.85}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          fog={false}
+        />
+      </points>
+      {dust.map((d, i) => (
+        <sprite key={i} position={d.position} scale={d.scale}>
+          <spriteMaterial
+            map={glow}
+            color={d.color}
+            transparent
+            opacity={0.12}
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+            fog={false}
+          />
+        </sprite>
+      ))}
     </group>
   )
 }
@@ -309,6 +399,7 @@ export function HeroScene({
       <directionalLight position={[4, 5, 3]} intensity={2} />
       <pointLight position={[-4, -2, 2]} intensity={30} color={ACCENT} />
 
+      <DepthField />
       <Galaxy />
       <Globe />
       <MenuRing activeIndex={activeIndex} onSelect={onSelect} />
