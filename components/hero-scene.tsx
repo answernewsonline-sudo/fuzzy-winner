@@ -261,6 +261,12 @@ function Globe() {
 
 const STL_SCALE = 0.36
 
+// Menu labels that are drawn from a 3D model instead of live text.
+const STL_MODELS: Record<string, string | undefined> = {
+  'Exhibition Online': '/models/exhibition-online.stl',
+  Business: '/models/business.stl',
+}
+
 // Extruded 3D label loaded from an STL file, shaded as chromium.
 function StlLabel({
   url,
@@ -354,8 +360,8 @@ function MenuItem({
               envMapIntensity={1.6}
             />
           </mesh>
-          {label === 'Exhibition Online' ? (
-            <StlLabel url="/models/exhibition-online.stl" env={env} highlighted={highlighted} />
+          {STL_MODELS[label] ? (
+            <StlLabel url={STL_MODELS[label]} env={env} highlighted={highlighted} />
           ) : (
           <Center>
             <Text3D
