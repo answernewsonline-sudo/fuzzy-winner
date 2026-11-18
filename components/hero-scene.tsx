@@ -1,6 +1,7 @@
 'use client'
 
 import { Canvas, useFrame } from '@react-three/fiber'
+import { GalaxyBackground } from '@/components/galaxy-background'
 import { Billboard, Environment, Float, Sparkles, Text, useTexture } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -199,25 +200,27 @@ export function HeroScene({
   onSelect: (index: number) => void
 }) {
   return (
-    <Canvas
-      camera={{ position: [0, 1, 8], fov: 45 }}
-      dpr={[1, 2]}
-      gl={{ antialias: true }}
-      aria-hidden="true"
-      onPointerMissed={() => onSelect(-1)}
-    >
-      <color attach="background" args={['#0b0b0f']} />
-      <fog attach="fog" args={['#0b0b0f', 8, 15]} />
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[4, 5, 3]} intensity={2} />
-      <pointLight position={[-4, -2, 2]} intensity={30} color={ACCENT} />
+    <>
+      <GalaxyBackground />
+      <Canvas
+        camera={{ position: [0, 1, 8], fov: 45 }}
+        dpr={[1, 2]}
+        gl={{ antialias: true, alpha: true }}
+        aria-hidden="true"
+        onPointerMissed={() => onSelect(-1)}
+      >
+        <fog attach="fog" args={['#0b0b0f', 8, 15]} />
+        <ambientLight intensity={0.3} />
+        <directionalLight position={[4, 5, 3]} intensity={2} />
+        <pointLight position={[-4, -2, 2]} intensity={30} color={ACCENT} />
 
-      <Globe />
-      <MenuRing activeIndex={activeIndex} onSelect={onSelect} />
+        <Globe />
+        <MenuRing activeIndex={activeIndex} onSelect={onSelect} />
 
-      <Sparkles count={120} scale={[12, 8, 6]} size={2} speed={0.3} color={LIGHT} opacity={0.5} />
-      <Environment preset="city" />
-      <CameraRig />
-    </Canvas>
+        <Sparkles count={120} scale={[12, 8, 6]} size={2} speed={0.3} color={LIGHT} opacity={0.5} />
+        <Environment preset="city" />
+        <CameraRig />
+      </Canvas>
+    </>
   )
 }
