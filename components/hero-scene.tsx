@@ -452,6 +452,24 @@ function CameraRig() {
   return null
 }
 
+// Shrinks the whole scene on narrow (portrait or mobile) viewports so the
+// globe and orbit menu stay fully on screen. Eases between sizes on resize.
+function SceneRoot({ children }: { children: React.ReactNode }) {
+  const ref = useRef<THREE.Group>(null)
+
+  useFrame((state, delta) => {
+    if (!ref.current) return
+    const { width, height } = state.size
+    const aspect = width / Math.max(height, 1)
+    const target = THREE.MathUtils.clamp(aspect / 1.5, 0.5, 1.05)
+    const k = 1 - Math.exp(-delta * 6)
+    const next = THREE.MathUtils.lerp(ref.current.scale.x, target, k)
+    ref.current.scale.setScalar(next)
+  })
+
+  return <group ref={ref}>{children}</group>
+}
+
 export function HeroScene({
   activeIndex,
   onSelect,
@@ -462,7 +480,7 @@ export function HeroScene({
   return (
     <Canvas
       camera={{ position: [0, 1, 8], fov: 45 }}
-      dpr={[1, 2]}
+      dpr={[1, 1.5]}
       gl={{ antialias: true }}
       aria-hidden="true"
       onPointerMissed={() => onSelect(-1)}
@@ -473,12 +491,13 @@ export function HeroScene({
       <directionalLight position={[4, 5, 3]} intensity={2} />
       <pointLight position={[-4, -2, 2]} intensity={30} color={ACCENT} />
 
-      <DepthField />
-      <Galaxy />
-      <Globe />
-      <MenuRing activeIndex={activeIndex} onSelect={onSelect} />
-
-      <Sparkles count={120} scale={[12, 8, 6]} size={2} speed={0.3} color={LIGHT} opacity={0.5} />
+      <SceneRoot>
+        <DepthField />
+        <Galaxy />
+        <Globe />
+        <MenuRing activeIndex={activeIndex} onSelect={onSelect} />
+        <Sparkles count={120} scale={[12, 8, 6]} size={2} speed={0.3} color={LIGHT} opacity={0.5} />
+      </SceneRoot>
       <Environment preset="city" />
       <CameraRig />
     </Canvas>
