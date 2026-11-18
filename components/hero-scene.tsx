@@ -325,7 +325,7 @@ function MenuItem({
             letterSpacing={-0.02}
             anchorX="center"
             anchorY="middle"
-            color={highlighted ? ACCENT : LIGHT}
+            color={highlighted ? '#ffffff' : CHROME}
             outlineWidth={highlighted ? 0.004 : 0}
             outlineColor={ACCENT}
           >
