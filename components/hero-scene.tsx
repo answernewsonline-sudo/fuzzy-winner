@@ -5,6 +5,7 @@ import { Billboard, Center, Environment, Float, Sparkles, Text3D, useTexture } f
 import { useLoader } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 
 export const MENU_ITEMS = ['News', 'Contact', 'Business', 'Exhibition Online', 'Directory'] as const
@@ -267,6 +268,13 @@ const STL_MODELS: Record<string, string | undefined> = {
   Business: '/models/business.stl',
 }
 
+// Menu labels drawn from an FBX model.
+const FBX_MODELS: Record<string, string | undefined> = {
+  Contact: '/models/contact.fbx',
+}
+// Contact model is 70 units tall in its own axes; scale to match the other labels.
+const FBX_SCALE = 0.25 / 70
+
 // Extruded 3D label loaded from an STL file, shaded as chromium.
 function StlLabel({
   url,
@@ -295,6 +303,45 @@ function StlLabel({
         emissiveIntensity={highlighted ? 0.6 : 0}
       />
     </mesh>
+  )
+}
+
+// FBX label: the model's text lies in its Z axis, so it is rotated into the
+// label plane. The negative Z scale is needed to keep the letters readable.
+function FbxLabel({
+  url,
+  env,
+  highlighted,
+}: {
+  url: string
+  env: THREE.Texture
+  highlighted: boolean
+}) {
+  const fbx = useLoader(FBXLoader, url)
+
+  const root = useMemo(() => {
+    const copy = fbx.clone(true)
+    const material = new THREE.MeshStandardMaterial({
+      color: CHROME,
+      metalness: 1,
+      roughness: 0.12,
+      envMap: env,
+      envMapIntensity: 1.8,
+      emissive: new THREE.Color(ACCENT),
+      emissiveIntensity: highlighted ? 0.6 : 0,
+    })
+    copy.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) (child as THREE.Mesh).material = material
+    })
+    const box = new THREE.Box3().setFromObject(copy)
+    copy.position.sub(box.getCenter(new THREE.Vector3()))
+    return copy
+  }, [fbx, env, highlighted])
+
+  return (
+    <group rotation={[-Math.PI / 2, 0, 0]} scale={[FBX_SCALE, FBX_SCALE, -FBX_SCALE]}>
+      <primitive object={root} />
+    </group>
   )
 }
 
@@ -360,7 +407,9 @@ function MenuItem({
               envMapIntensity={1.6}
             />
           </mesh>
-          {STL_MODELS[label] ? (
+          {FBX_MODELS[label] ? (
+            <FbxLabel url={FBX_MODELS[label]} env={env} highlighted={highlighted} />
+          ) : STL_MODELS[label] ? (
             <StlLabel url={STL_MODELS[label]} env={env} highlighted={highlighted} />
           ) : (
           <Center>
