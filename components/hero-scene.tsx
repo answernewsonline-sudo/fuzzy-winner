@@ -5,6 +5,7 @@ import { Billboard, Center, Environment, Float, Sparkles, Text3D, useTexture } f
 import { useLoader } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
 
 export const MENU_ITEMS = ['News', 'Contact', 'Business', 'Exhibition Online', 'Directory'] as const
@@ -212,7 +213,7 @@ function useNebulaEnv() {
 function Globe() {
   const group = useRef<THREE.Group>(null)
   const wire = useRef<THREE.Mesh>(null)
-  const texture = useTexture('/textures/globe.jpg')
+  const texture = useTexture('/textures/world.jpg')
   const env = useNebulaEnv()
   texture.colorSpace = THREE.SRGBColorSpace
   texture.anisotropy = 8
@@ -236,7 +237,7 @@ function Globe() {
             clearcoat={0.6}
             clearcoatRoughness={0.15}
             envMap={env}
-            envMapIntensity={1.2}
+            envMapIntensity={0.5}
           />
         </mesh>
         <mesh ref={wire}>
@@ -267,6 +268,15 @@ const STL_MODELS: Record<string, string | undefined> = {
   Business: '/models/business.stl',
 }
 
+// Menu labels drawn from an FBX model.
+const FBX_MODELS: Record<string, string | undefined> = {
+  Contact: '/models/contact.fbx',
+  News: '/models/news.fbx',
+  Directory: '/models/directory.fbx',
+}
+// The text FBX models are 70 units tall in their own axes; scale to match the other labels.
+const FBX_SCALE = 0.25 / 70
+
 // Extruded 3D label loaded from an STL file, shaded as chromium.
 function StlLabel({
   url,
@@ -295,6 +305,45 @@ function StlLabel({
         emissiveIntensity={highlighted ? 0.6 : 0}
       />
     </mesh>
+  )
+}
+
+// FBX label: the model's text lies in its Z axis, so it is rotated into the
+// label plane. The negative Z scale is needed to keep the letters readable.
+function FbxLabel({
+  url,
+  env,
+  highlighted,
+}: {
+  url: string
+  env: THREE.Texture
+  highlighted: boolean
+}) {
+  const fbx = useLoader(FBXLoader, url)
+
+  const root = useMemo(() => {
+    const copy = fbx.clone(true)
+    const material = new THREE.MeshStandardMaterial({
+      color: CHROME,
+      metalness: 1,
+      roughness: 0.12,
+      envMap: env,
+      envMapIntensity: 1.8,
+      emissive: new THREE.Color(ACCENT),
+      emissiveIntensity: highlighted ? 0.6 : 0,
+    })
+    copy.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) (child as THREE.Mesh).material = material
+    })
+    const box = new THREE.Box3().setFromObject(copy)
+    copy.position.sub(box.getCenter(new THREE.Vector3()))
+    return copy
+  }, [fbx, env, highlighted])
+
+  return (
+    <group rotation={[-Math.PI / 2, 0, 0]} scale={[FBX_SCALE, FBX_SCALE, -FBX_SCALE]}>
+      <primitive object={root} />
+    </group>
   )
 }
 
@@ -360,7 +409,9 @@ function MenuItem({
               envMapIntensity={1.6}
             />
           </mesh>
-          {STL_MODELS[label] ? (
+          {FBX_MODELS[label] ? (
+            <FbxLabel url={FBX_MODELS[label]} env={env} highlighted={highlighted} />
+          ) : STL_MODELS[label] ? (
             <StlLabel url={STL_MODELS[label]} env={env} highlighted={highlighted} />
           ) : (
           <Center>
@@ -546,8 +597,8 @@ export function HeroScene({
       <color attach="background" args={['#0b0b0f']} />
       <fog attach="fog" args={['#0b0b0f', 8, 15]} />
       <ambientLight intensity={0.3} />
-      <directionalLight position={[4, 5, 3]} intensity={2} />
-      <pointLight position={[-4, -2, 2]} intensity={30} color={ACCENT} />
+      <directionalLight position={[4, 5, 3]} intensity={1.1} />
+      <pointLight position={[-4, -2, 2]} intensity={10} color={ACCENT} />
 
       <SceneRoot>
         <DepthField />
