@@ -237,7 +237,7 @@ function Globe() {
             clearcoat={0.6}
             clearcoatRoughness={0.15}
             envMap={env}
-            envMapIntensity={1.2}
+            envMapIntensity={0.5}
           />
         </mesh>
         <mesh ref={wire}>
@@ -597,8 +597,8 @@ export function HeroScene({
       <color attach="background" args={['#0b0b0f']} />
       <fog attach="fog" args={['#0b0b0f', 8, 15]} />
       <ambientLight intensity={0.3} />
-      <directionalLight position={[4, 5, 3]} intensity={2} />
-      <pointLight position={[-4, -2, 2]} intensity={30} color={ACCENT} />
+      <directionalLight position={[4, 5, 3]} intensity={1.1} />
+      <pointLight position={[-4, -2, 2]} intensity={10} color={ACCENT} />
 
       <SceneRoot>
         <DepthField />
