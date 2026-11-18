@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Billboard, Environment, Float, Sparkles, Text } from '@react-three/drei'
+import { Billboard, Environment, Float, Sparkles, Text, useTexture } from '@react-three/drei'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 
@@ -14,6 +14,9 @@ const LIGHT = '#e8e6e3'
 function Globe() {
   const group = useRef<THREE.Group>(null)
   const wire = useRef<THREE.Mesh>(null)
+  const texture = useTexture('/textures/globe.jpg')
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 8
 
   useFrame((_, delta) => {
     if (!group.current) return
@@ -27,12 +30,13 @@ function Globe() {
         <mesh>
           <sphereGeometry args={[1.5, 128, 128]} />
           <meshPhysicalMaterial
-            color="#c9ccd6"
-            metalness={1}
-            roughness={0.04}
-            clearcoat={1}
-            clearcoatRoughness={0.05}
-            envMapIntensity={1.6}
+            map={texture}
+            color="#ffffff"
+            metalness={0.2}
+            roughness={0.35}
+            clearcoat={0.6}
+            clearcoatRoughness={0.15}
+            envMapIntensity={1}
           />
         </mesh>
         <mesh ref={wire}>
