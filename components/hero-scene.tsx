@@ -10,6 +10,7 @@ export const MENU_ITEMS = ['News', 'Contact', 'Business', 'Exhibition Online', '
 const RING_RADIUS = 3.3
 const ACCENT = '#c9ccd6'
 const LIGHT = '#e8e6e3'
+const CHROME = '#c9ccd6'
 
 const STAR_COUNT = 5000
 const GALAXY_RADIUS = 16
@@ -198,10 +199,19 @@ function DepthField() {
   )
 }
 
+// Nebula photo used as the environment that chromium surfaces reflect.
+function useNebulaEnv() {
+  const env = useTexture('/textures/nebula-env.jpg')
+  env.mapping = THREE.EquirectangularReflectionMapping
+  env.colorSpace = THREE.SRGBColorSpace
+  return env
+}
+
 function Globe() {
   const group = useRef<THREE.Group>(null)
   const wire = useRef<THREE.Mesh>(null)
   const texture = useTexture('/textures/globe.jpg')
+  const env = useNebulaEnv()
   texture.colorSpace = THREE.SRGBColorSpace
   texture.anisotropy = 8
 
@@ -219,11 +229,12 @@ function Globe() {
           <meshPhysicalMaterial
             map={texture}
             color="#ffffff"
-            metalness={0.2}
-            roughness={0.35}
+            metalness={0.35}
+            roughness={0.25}
             clearcoat={0.6}
             clearcoatRoughness={0.15}
-            envMapIntensity={1}
+            envMap={env}
+            envMapIntensity={1.2}
           />
         </mesh>
         <mesh ref={wire}>
@@ -234,6 +245,8 @@ function Globe() {
             emissiveIntensity={0.45}
             metalness={1}
             roughness={0.1}
+            envMap={env}
+            envMapIntensity={1.4}
             wireframe
             transparent
             opacity={0.7}
@@ -259,6 +272,7 @@ function MenuItem({
   const item = useRef<THREE.Group>(null)
   const marker = useRef<THREE.Mesh>(null)
   const highlighted = hovered || active
+  const env = useNebulaEnv()
 
   useEffect(() => {
     document.body.style.cursor = hovered ? 'pointer' : 'auto'
@@ -296,11 +310,13 @@ function MenuItem({
           <mesh ref={marker} position={[0, 0.42, 0]}>
             <octahedronGeometry args={[0.11, 0]} />
             <meshStandardMaterial
-              color={highlighted ? ACCENT : LIGHT}
+              color={CHROME}
               emissive={ACCENT}
               emissiveIntensity={highlighted ? 1.5 : 0.2}
-              metalness={0.8}
-              roughness={0.2}
+              metalness={1}
+              roughness={0.12}
+              envMap={env}
+              envMapIntensity={1.6}
             />
           </mesh>
           <Text
@@ -381,6 +397,7 @@ function MenuRing({
   onSelect: (index: number) => void
 }) {
   const ring = useRef<THREE.Group>(null)
+  const env = useNebulaEnv()
   const step = (Math.PI * 2) / MENU_ITEMS.length
 
   useFrame((_, delta) => {
@@ -400,7 +417,15 @@ function MenuRing({
       <OrbitDust />
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[RING_RADIUS, 0.006, 16, 256]} />
-        <meshStandardMaterial color={LIGHT} metalness={1} roughness={0.1} transparent opacity={0.5} />
+        <meshStandardMaterial
+          color={CHROME}
+          metalness={1}
+          roughness={0.12}
+          envMap={env}
+          envMapIntensity={1.6}
+          transparent
+          opacity={0.6}
+        />
       </mesh>
       <group ref={ring}>
         {MENU_ITEMS.map((label, i) => (
