@@ -325,11 +325,12 @@ function MenuItem({
               size={0.3}
               height={0.06}
               letterSpacing={-0.01}
-              curveSegments={6}
+              curveSegments={18}
               bevelEnabled
               bevelThickness={0.012}
               bevelSize={0.008}
-              bevelSegments={3}
+              bevelSegments={6}
+              smooth={0.02}
             >
               {label.toUpperCase()}
               <meshStandardMaterial
