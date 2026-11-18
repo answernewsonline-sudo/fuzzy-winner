@@ -8,7 +8,7 @@ import * as THREE from 'three'
 export const MENU_ITEMS = ['News', 'Contact', 'Business', 'Exhibition Online', 'Directory'] as const
 
 const RING_RADIUS = 3.3
-const ACCENT = '#7c5cff'
+const ACCENT = '#c9ccd6'
 const LIGHT = '#e8e6e3'
 
 const STAR_COUNT = 5000
@@ -17,7 +17,7 @@ const ARMS = 3
 const PALETTE = {
   core: new THREE.Color('#ffe2a8'),
   mid: new THREE.Color('#ff4fd8'),
-  outer: new THREE.Color('#7c5cff'),
+  outer: new THREE.Color('#c9ccd6'),
   edge: new THREE.Color('#37d7ff'),
 }
 
@@ -115,7 +115,7 @@ function Galaxy() {
 
 const FAR_STARS = 9000
 const DUST_CLOUDS = 14
-const FAR_COLORS = ['#37d7ff', '#7c5cff', '#ff4fd8', '#ff7a3d', '#ffe2a8'].map(
+const FAR_COLORS = ['#37d7ff', '#c9ccd6', '#ff4fd8', '#ff7a3d', '#ffe2a8'].map(
   (hex) => new THREE.Color(hex),
 )
 
