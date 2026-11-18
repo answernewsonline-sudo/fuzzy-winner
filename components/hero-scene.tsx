@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Billboard, Environment, Float, Sparkles, Text, useTexture } from '@react-three/drei'
+import { Billboard, Environment, Float, Sparkles, useTexture } from '@react-three/drei'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
@@ -257,6 +257,84 @@ function Globe() {
   )
 }
 
+const LABEL_HEIGHT = 0.3
+
+// Draws a menu label onto a canvas with a chrome gradient, so the label can
+// be a reflective metal plane. Returns null on the server (no DOM there).
+function makeChromeLabel(text: string, highlighted: boolean) {
+  if (typeof document === 'undefined') return null
+  const canvas = document.createElement('canvas')
+  const measure = canvas.getContext('2d')
+  if (!measure) return null
+
+  const font = '700 110px ui-sans-serif, system-ui, sans-serif'
+  measure.font = font
+  const textWidth = measure.measureText(text).width
+
+  const height = 160
+  canvas.width = Math.ceil(textWidth + 40)
+  canvas.height = height
+
+  // Setting the canvas size resets the context, so set the state again.
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.font = font
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+
+  // Vertical chrome gradient: bright top, dark band, bright lower edge.
+  const gradient = ctx.createLinearGradient(0, 0, 0, height)
+  gradient.addColorStop(0, '#ffffff')
+  gradient.addColorStop(0.42, '#c9ccd6')
+  gradient.addColorStop(0.5, '#4a4f5e')
+  gradient.addColorStop(0.58, '#e8e6e3')
+  gradient.addColorStop(1, '#8d93a3')
+
+  if (highlighted) {
+    ctx.shadowColor = ACCENT
+    ctx.shadowBlur = 24
+  }
+  ctx.fillStyle = gradient
+  ctx.fillText(text, canvas.width / 2, height / 2 + 4)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 4
+  return { texture, width: (LABEL_HEIGHT * canvas.width) / height }
+}
+
+function ChromeLabel({
+  text,
+  highlighted,
+  env,
+}: {
+  text: string
+  highlighted: boolean
+  env: THREE.Texture
+}) {
+  const label = useMemo(() => makeChromeLabel(text, highlighted), [text, highlighted])
+
+  useEffect(() => {
+    return () => label?.texture.dispose()
+  }, [label])
+
+  if (!label) return null
+  return (
+    <mesh>
+      <planeGeometry args={[label.width, LABEL_HEIGHT]} />
+      <meshStandardMaterial
+        map={label.texture}
+        transparent
+        depthWrite={false}
+        metalness={1}
+        roughness={0.15}
+        envMap={env}
+        envMapIntensity={1.8}
+      />
+    </mesh>
+  )
+}
+
 function MenuItem({
   label,
   angle,
@@ -319,18 +397,7 @@ function MenuItem({
               envMapIntensity={1.6}
             />
           </mesh>
-          <Text
-            font="/fonts/Geist-Bold.ttf"
-            fontSize={0.3}
-            letterSpacing={-0.02}
-            anchorX="center"
-            anchorY="middle"
-            color={highlighted ? '#ffffff' : CHROME}
-            outlineWidth={highlighted ? 0.004 : 0}
-            outlineColor={ACCENT}
-          >
-            {label.toUpperCase()}
-          </Text>
+          <ChromeLabel text={label.toUpperCase()} highlighted={highlighted} env={env} />
           <mesh position={[0, 0.1, -0.02]}>
             <planeGeometry args={[label.length * 0.24 + 0.4, 1]} />
             <meshBasicMaterial transparent opacity={0} depthWrite={false} />
