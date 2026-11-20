@@ -627,11 +627,8 @@ export function HeroScene({
       <pointLight position={[-4, -2, 2]} intensity={10} color={ACCENT} />
 
       <SceneRoot>
-        <DepthField />
-        <Galaxy />
         <Logo />
         <MenuRing activeIndex={activeIndex} onSelect={onSelect} />
-        <Sparkles count={120} scale={[12, 8, 6]} size={2} speed={0.3} color={LIGHT} opacity={0.5} />
       </SceneRoot>
       <Environment preset="city" />
       <CameraRig />
