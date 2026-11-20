@@ -229,15 +229,13 @@ function Globe() {
       <group ref={group} rotation={[0.35, 0, 0.15]} scale={0.9}>
         <mesh>
           <sphereGeometry args={[1.5, 128, 128]} />
-          <meshPhysicalMaterial
-            map={texture}
-            color="#ffffff"
-            metalness={0.35}
-            roughness={0.25}
-            clearcoat={0.6}
-            clearcoatRoughness={0.15}
-            envMap={env}
-            envMapIntensity={0.5}
+          {/* Self-lit: the map is emitted by the surface itself, with no diffuse or specular response to scene lights. */}
+          <meshLambertMaterial
+            color="#000000"
+            emissive="#ffffff"
+            emissiveMap={texture}
+            emissiveIntensity={1.1}
+            toneMapped={false}
           />
         </mesh>
         <mesh ref={wire}>
