@@ -291,7 +291,7 @@ function Logo() {
 }
 
 // Overall size of each orbiting menu label (1 = original size).
-const MENU_SCALE = 0.5
+const MENU_SCALE = 1
 
 const STL_SCALE = 0.36
 
