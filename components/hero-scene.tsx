@@ -1,7 +1,7 @@
 'use client'
 
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Billboard, Center, Environment, Float, Sparkles, Text3D, useTexture } from '@react-three/drei'
+import { Billboard, Center, Environment, Float, Line, Sparkles, Text3D, useTexture } from '@react-three/drei'
 import { useLoader } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -532,6 +532,70 @@ function OrbitDust() {
   )
 }
 
+// Direction the menu ring travels: 1 turns it one way, -1 the other.
+const ORBIT_DIRECTION = -1
+const TRAIL_YELLOW = new THREE.Color('#ffc21a')
+
+// Glowing streaks that race around the orbit, fading out behind their bright head.
+function OrbitTrails() {
+  const group = useRef<THREE.Group>(null)
+
+  const trails = useMemo(
+    () =>
+      Array.from({ length: 9 }, (_, i) => {
+        const length = 0.5 + Math.random() * 1.1
+        const radius = RING_RADIUS + (Math.random() - 0.5) * 0.12
+        const y = (Math.random() - 0.5) * 0.1
+        const segments = 48
+        const points: [number, number, number][] = []
+        const colors: [number, number, number][] = []
+        for (let k = 0; k <= segments; k++) {
+          const t = k / segments // 0 = tail, 1 = head
+          // Tail trails behind the head, relative to the direction of travel.
+          const a = ORBIT_DIRECTION * (t - 1) * length
+          points.push([Math.sin(a) * radius, y, Math.cos(a) * radius])
+          const fade = t * t
+          colors.push([TRAIL_YELLOW.r * fade, TRAIL_YELLOW.g * fade, TRAIL_YELLOW.b * fade])
+        }
+        return {
+          points,
+          colors,
+          offset: (i / 9) * Math.PI * 2 + Math.random() * 0.4,
+          speed: 0.35 + Math.random() * 0.5,
+          width: 1.5 + Math.random() * 2,
+        }
+      }),
+    [],
+  )
+
+  useFrame((state) => {
+    if (!group.current) return
+    const t = state.clock.elapsedTime
+    group.current.children.forEach((child, i) => {
+      const trail = trails[i]
+      child.rotation.y = trail.offset + ORBIT_DIRECTION * t * trail.speed
+    })
+  })
+
+  return (
+    <group ref={group}>
+      {trails.map((trail, i) => (
+        <group key={i}>
+          <Line
+            points={trail.points}
+            vertexColors={trail.colors}
+            lineWidth={trail.width}
+            transparent
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+            toneMapped={false}
+          />
+        </group>
+      ))}
+    </group>
+  )
+}
+
 function MenuRing({
   activeIndex,
   onSelect,
@@ -546,7 +610,7 @@ function MenuRing({
   useFrame((_, delta) => {
     if (!ring.current) return
     if (activeIndex === null) {
-      ring.current.rotation.y += delta * 0.12
+      ring.current.rotation.y += ORBIT_DIRECTION * delta * 0.12
       return
     }
     const current = ring.current.rotation.y
@@ -558,6 +622,7 @@ function MenuRing({
   return (
     <group rotation={[0.22, 0, 0]}>
       <OrbitDust />
+      <OrbitTrails />
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[RING_RADIUS, 0.006, 16, 256]} />
         <meshStandardMaterial
