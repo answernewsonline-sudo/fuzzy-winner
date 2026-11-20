@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 
 export const MENU_ITEMS = ['News', 'Contact', 'Business', 'Exhibition Online', 'Directory'] as const
 
@@ -210,51 +211,93 @@ function useNebulaEnv() {
   return env
 }
 
-function Globe() {
-  const group = useRef<THREE.Group>(null)
-  const wire = useRef<THREE.Mesh>(null)
-  const texture = useTexture('/textures/world.jpg')
-  const env = useNebulaEnv()
-  texture.colorSpace = THREE.SRGBColorSpace
-  texture.anisotropy = 8
+const LOGO_URL = '/logo/logo-3d.svg'
+const LOGO_WIDTH = 4.6
+// Extrusion and bevel are in SVG units (the logo is ~7861 units wide).
+const LOGO_DEPTH = 120
+const LOGO_BEVEL_THICKNESS = 50
+const LOGO_BEVEL_SIZE = 16
 
-  useFrame((_, delta) => {
+function Logo() {
+  const group = useRef<THREE.Group>(null)
+  const { paths } = useLoader(SVGLoader, LOGO_URL)
+  const env = useNebulaEnv()
+
+  const { meshes, bounds } = useMemo(() => {
+    const materials = {
+      blue: new THREE.MeshPhysicalMaterial({
+        color: '#0D52A3',
+        metalness: 0.3,
+        roughness: 0.3,
+        clearcoat: 0.6,
+        clearcoatRoughness: 0.15,
+        envMap: env,
+        envMapIntensity: 0.8,
+      }),
+      white: new THREE.MeshPhysicalMaterial({
+        color: '#ffffff',
+        roughness: 0.25,
+        clearcoat: 1,
+        clearcoatRoughness: 0.1,
+        envMap: env,
+        envMapIntensity: 0.6,
+      }),
+      // The logo's black parts are lightened so they stay visible on the dark background.
+      light: new THREE.MeshStandardMaterial({
+        color: LIGHT,
+        metalness: 0.8,
+        roughness: 0.2,
+        envMap: env,
+        envMapIntensity: 1.2,
+      }),
+    }
+
+    const meshes: { geometry: THREE.ExtrudeGeometry; material: THREE.Material }[] = []
+    const box = new THREE.Box3()
+
+    for (const path of paths) {
+      const hex = path.color.getHexString()
+      const material = hex === '0d52a3' ? materials.blue : hex === 'ffffff' ? materials.white : materials.light
+      for (const shape of SVGLoader.createShapes(path)) {
+        const geometry = new THREE.ExtrudeGeometry(shape, {
+          depth: LOGO_DEPTH,
+          bevelEnabled: true,
+          bevelThickness: LOGO_BEVEL_THICKNESS,
+          bevelSize: LOGO_BEVEL_SIZE,
+          bevelSegments: 6,
+          curveSegments: 12,
+        })
+        geometry.computeBoundingBox()
+        if (geometry.boundingBox) box.union(geometry.boundingBox)
+        meshes.push({ geometry, material })
+      }
+    }
+
+    return { meshes, bounds: box }
+  }, [paths, env])
+
+  const scale = LOGO_WIDTH / (bounds.max.x - bounds.min.x)
+  const cx = (bounds.max.x + bounds.min.x) / 2
+  const cy = (bounds.max.y + bounds.min.y) / 2
+  const cz = (bounds.max.z + bounds.min.z) / 2
+
+  useFrame((state) => {
     if (!group.current) return
-    group.current.rotation.y += delta * 0.2
-    if (wire.current) wire.current.rotation.y -= delta * 0.08
+    // Gentle sway instead of a full spin, so the flat wordmark stays readable.
+    const t = state.clock.elapsedTime
+    group.current.rotation.y = Math.sin(t * 0.6) * 0.35
+    group.current.rotation.x = Math.sin(t * 0.4) * 0.08
   })
 
   return (
     <Float speed={1.4} rotationIntensity={0.3} floatIntensity={0.6}>
-      <group ref={group} rotation={[0.35, 0, 0.15]} scale={0.9}>
-        <mesh>
-          <sphereGeometry args={[1.5, 128, 128]} />
-          <meshPhysicalMaterial
-            map={texture}
-            color="#ffffff"
-            metalness={0.35}
-            roughness={0.25}
-            clearcoat={0.6}
-            clearcoatRoughness={0.15}
-            envMap={env}
-            envMapIntensity={0.5}
-          />
-        </mesh>
-        <mesh ref={wire}>
-          <sphereGeometry args={[1.56, 36, 18]} />
-          <meshStandardMaterial
-            color={LIGHT}
-            emissive={ACCENT}
-            emissiveIntensity={0.45}
-            metalness={1}
-            roughness={0.1}
-            envMap={env}
-            envMapIntensity={1.4}
-            wireframe
-            transparent
-            opacity={0.7}
-          />
-        </mesh>
+      {/* SVG y points down, hence the negative y scale. */}
+      <group ref={group} scale={[scale, -scale, scale]}>
+        <group position={[-cx, -cy, -cz]}>
+          {meshes.map((m, i) => (
+            <mesh key={i} geometry={m.geometry} material={m.material} />
+          ))}
+        </group>
       </group>
     </Float>
   )
@@ -603,7 +646,7 @@ export function HeroScene({
       <SceneRoot>
         <DepthField />
         <Galaxy />
-        <Globe />
+        <Logo />
         <MenuRing activeIndex={activeIndex} onSelect={onSelect} />
         <Sparkles count={120} scale={[12, 8, 6]} size={2} speed={0.3} color={LIGHT} opacity={0.5} />
       </SceneRoot>
