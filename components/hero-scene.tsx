@@ -221,35 +221,13 @@ const LOGO_BEVEL_SIZE = 16
 function Logo() {
   const group = useRef<THREE.Group>(null)
   const { paths } = useLoader(SVGLoader, LOGO_URL)
-  const env = useNebulaEnv()
 
   const { meshes, bounds } = useMemo(() => {
     const materials = {
-      blue: new THREE.MeshPhysicalMaterial({
-        color: '#0D52A3',
-        metalness: 0.3,
-        roughness: 0.3,
-        clearcoat: 0.6,
-        clearcoatRoughness: 0.15,
-        envMap: env,
-        envMapIntensity: 0.8,
-      }),
-      white: new THREE.MeshPhysicalMaterial({
-        color: '#ffffff',
-        roughness: 0.25,
-        clearcoat: 1,
-        clearcoatRoughness: 0.1,
-        envMap: env,
-        envMapIntensity: 0.6,
-      }),
+      blue: new THREE.MeshStandardMaterial({ color: '#0D52A3', metalness: 0, roughness: 0.85, envMapIntensity: 0 }),
+      white: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0, roughness: 0.85, envMapIntensity: 0 }),
       // The logo's black parts are lightened so they stay visible on the dark background.
-      light: new THREE.MeshStandardMaterial({
-        color: LIGHT,
-        metalness: 0.8,
-        roughness: 0.2,
-        envMap: env,
-        envMapIntensity: 1.2,
-      }),
+      light: new THREE.MeshStandardMaterial({ color: LIGHT, metalness: 0, roughness: 0.85, envMapIntensity: 0 }),
     }
 
     const meshes: { geometry: THREE.ExtrudeGeometry; material: THREE.Material }[] = []
@@ -274,7 +252,7 @@ function Logo() {
     }
 
     return { meshes, bounds: box }
-  }, [paths, env])
+  }, [paths])
 
   const scale = LOGO_WIDTH / (bounds.max.x - bounds.min.x)
   const cx = (bounds.max.x + bounds.min.x) / 2
