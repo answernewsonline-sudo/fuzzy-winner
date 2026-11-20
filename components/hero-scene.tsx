@@ -223,11 +223,12 @@ function Logo() {
   const { paths } = useLoader(SVGLoader, LOGO_URL)
 
   const { meshes, bounds } = useMemo(() => {
+    // Unlit materials: the logo shows its flat brand colors and ignores scene lighting.
     const materials = {
-      blue: new THREE.MeshStandardMaterial({ color: '#0D52A3', metalness: 0, roughness: 0.85, envMapIntensity: 0 }),
-      white: new THREE.MeshStandardMaterial({ color: '#ffffff', metalness: 0, roughness: 0.85, envMapIntensity: 0 }),
+      blue: new THREE.MeshBasicMaterial({ color: '#0D52A3', toneMapped: false }),
+      white: new THREE.MeshBasicMaterial({ color: '#ffffff', toneMapped: false }),
       // The logo's black parts are lightened so they stay visible on the dark background.
-      light: new THREE.MeshStandardMaterial({ color: LIGHT, metalness: 0, roughness: 0.85, envMapIntensity: 0 }),
+      light: new THREE.MeshBasicMaterial({ color: LIGHT, toneMapped: false }),
     }
 
     const meshes: { geometry: THREE.ExtrudeGeometry; material: THREE.Material }[] = []
