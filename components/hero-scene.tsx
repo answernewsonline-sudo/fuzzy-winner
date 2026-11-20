@@ -221,12 +221,20 @@ const LOGO_BEVEL_SIZE = 16
 function Logo() {
   const group = useRef<THREE.Group>(null)
   const { paths } = useLoader(SVGLoader, LOGO_URL)
+  const env = useNebulaEnv()
 
   const { meshes, bounds } = useMemo(() => {
-    // Unlit materials: the logo shows its flat brand colors and ignores scene lighting.
+    // Blue and grey parts are unlit flat colors; only the white parts are reflective.
     const materials = {
       blue: new THREE.MeshBasicMaterial({ color: '#0D52A3', toneMapped: false }),
-      white: new THREE.MeshBasicMaterial({ color: '#ffffff', toneMapped: false }),
+      // The white parts are polished chrome: they reflect the nebula environment.
+      white: new THREE.MeshStandardMaterial({
+        color: '#f2f4f8',
+        metalness: 1,
+        roughness: 0.12,
+        envMap: env,
+        envMapIntensity: 1.6,
+      }),
       // The logo's black parts are lightened so they stay visible on the dark background.
       light: new THREE.MeshBasicMaterial({ color: LIGHT, toneMapped: false }),
     }
@@ -253,7 +261,7 @@ function Logo() {
     }
 
     return { meshes, bounds: box }
-  }, [paths])
+  }, [paths, env])
 
   const scale = LOGO_WIDTH / (bounds.max.x - bounds.min.x)
   const cx = (bounds.max.x + bounds.min.x) / 2
