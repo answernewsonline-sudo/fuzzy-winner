@@ -281,6 +281,9 @@ function Logo() {
   )
 }
 
+// Overall size of each orbiting menu label (1 = original size).
+const MENU_SCALE = 0.5
+
 const STL_SCALE = 0.36
 
 // Menu labels that are drawn from a 3D model instead of live text.
@@ -394,7 +397,7 @@ function MenuItem({
 
   useFrame((_, delta) => {
     if (item.current) {
-      const s = highlighted ? 1.2 : 1
+      const s = (highlighted ? 1.2 : 1) * MENU_SCALE
       item.current.scale.lerp(new THREE.Vector3(s, s, s), 0.12)
     }
     if (marker.current) {
@@ -408,6 +411,7 @@ function MenuItem({
       <Billboard>
         <group
           ref={item}
+          scale={MENU_SCALE}
           onPointerOver={(e) => {
             e.stopPropagation()
             setHovered(true)
